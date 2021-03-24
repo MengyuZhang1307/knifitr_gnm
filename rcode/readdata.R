@@ -1,4 +1,5 @@
 library(tidyverse)
+# read data from 10 subjects
 readdata <- function(data_type = NULL){
     filenames = list.files(path = "./data", pattern="*.csv")
     data = tibble(

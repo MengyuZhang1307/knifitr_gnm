@@ -13,7 +13,7 @@ kinfitr_gnm <- function(t, # sampling time
     # if input has been decay corrected
     if(decay_corrected == TRUE & !is.null(t_G)){
       # fit the model count ~ -1 + offset(log(delta)) + offset(log(vol)) + offset(-log(2)/20.364*t_G) + log_sum_exp(t) + offset(-log(0.003)*rep(1,length(t))) # calibration
-      model_res = gnm_prop_decay(t,t_G,y.sum,pf = rep(1,length(t)),bpr=rep(1,length(t)),disp,delta,vol)
+      model_res = gnm_prop(t,t_G,y.sum,pf = rep(1,length(t)),bpr=rep(1,length(t)),disp,delta,vol)
     } else {
       # if decay corrected indicator is not
       if(decay_corrected == FALSE){
@@ -33,7 +33,7 @@ kinfitr_gnm <- function(t, # sampling time
                                 # + offset(-log(0.003)*rep(1,length(t))) # calibration
                                 # + offset(-log(pf))# metabolism uncorrection
                                 # + log_sum_exp(t) # sum of exponential term
-      model_res = gnm_prop_decay(t,t_G,y.sum,pf=pf,bpr=rep(1,length(t)),disp,delta,vol)
+      model_res = gnm_prop(t,t_G,y.sum,pf=pf,bpr=rep(1,length(t)),disp,delta,vol)
 
       #### add other parent fraction function
     } else if (meta_corrected == TRUE){

@@ -26,6 +26,7 @@ initial_para <- function(x,y,props){
   
   # calculating the residuals for the first part
   resid12 = miny - exp(startvalue[3]+startvalue[4]*minx)
+  
   # regress residuals on first part
   strip3 = lm(log(abs(resid12)) ~ minx)
   startvalue[1:2] = c(coef(strip3)[1],coef(strip3)[2])

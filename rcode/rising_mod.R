@@ -1,8 +1,12 @@
 library(segmented)
+
+# detect t0 and interpolate aif between t0 and tmax
+# input data before tmax
+# return data with t0 recorded, model result for finding t0, linear model result and predicted aif
 acs_inter <- function(conc){
   fit_lm = lm(aif ~ time, data = conc)  # intercept-only model
   fit_segmented = segmented(fit_lm, seg.Z = ~time, npsi = 1)  # one change points along x
-  t_0 = fit_segmented$psi[2]
+  t_0 = fit_segmented$psi[2] # t0
   # t0s are the same for aif and counts
   # fit_lm_count = lm(count ~ time, data = conc)  # intercept-only model
   # fit_segmented_count = segmented(fit_lm, seg.Z = ~time, npsi = 1)  # Two change   points along x
@@ -19,10 +23,11 @@ acs_inter <- function(conc){
               pred = tibble(time = pred_asc$x, pred = pred_asc$y)))
   }
 
-find_t0_disp <- function(conc){
-  fit_lm = lm(disp_aif ~ time, data = conc)  # intercept-only model
-  fit_segmented = segmented(fit_lm, seg.Z = ~time, npsi = 1)  # Two change   points along x
-  t_0 = fit_segmented$psi[2]
-  conc = conc %>% mutate(t0 = t_0)
-  return(list(data = conc, segmod = fit_segmented, lmmod = fit_lm))
-}
+# for dispersion aif
+# find_t0_disp <- function(conc){
+#   fit_lm = lm(disp_aif ~ time, data = conc)  # intercept-only model
+#   fit_segmented = segmented(fit_lm, seg.Z = ~time, npsi = 1)  # Two change   points along x
+#   t_0 = fit_segmented$psi[2]
+#   conc = conc %>% mutate(t0 = t_0)
+#   return(list(data = conc, segmod = fit_segmented, lmmod = fit_lm))
+# }

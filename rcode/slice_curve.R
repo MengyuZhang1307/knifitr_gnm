@@ -1,7 +1,9 @@
+# find tmax
 findtmax <- function (data){
   return(data %>% mutate(tmax = time[which(aif == max(aif))]))
 }
 
+# get data after tmax
 slice_exp <- function(conc){
   conc = conc %>% 
     filter(time>=time[which(aif == max(aif))]) %>%
@@ -10,6 +12,7 @@ slice_exp <- function(conc){
   return(conc)
 }
 
+# get data before tmax
 slice_asc <- function(conc){
   conc = conc %>% 
     filter(time<=time[which(aif == max(aif))])

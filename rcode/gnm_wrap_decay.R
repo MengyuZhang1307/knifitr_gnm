@@ -3,7 +3,9 @@ source("rcode/initial_para.R")
 source("rcode/log_sum_exp.R")
 library(gnm)
 
+# do gnm regression and return model results
 gnm_mod1 <- function(t,t_G,y.sum,pf,bpr,disp,delta = delta,vol=vol, props = c(1/6,1/2),seed = 1,calibration){
+  # find appropraite starting values
   start_val = initial_para(t,y.sum, props)
   set.seed(seed)
   #Add decay correction, metabolism correction
@@ -16,24 +18,29 @@ gnm_mod1 <- function(t,t_G,y.sum,pf,bpr,disp,delta = delta,vol=vol, props = c(1/
   
 }
 
-quiet_gnm_mod1 <- quietly(gnm_mod1) # "Predictors are not all finite" is a message
+# make codes keeping running when gnm regression failed to converge
+quiet_gnm_mod1 <- quietly(gnm_mod1)
 
-gnm_prop_decay <- function(t,t_G,y.sum,pf = NULL,bpr = NULL,disp,delta,vol, calibration = 0.003){
+
+# sequentially find appropriate 
+gnm_prop <- function(t,t_G,y.sum,pf = NULL,bpr = NULL,disp,delta,vol, calibration = 0.003){
   try_res = quiet_gnm_mod1(t,t_G,y.sum,pf = pf,bpr=bpr,disp=disp,delta,vol, calibration= calibration)
-  # if defualt not ok, use cut (1/3,2/3).
-  if(length(try_res$messages)!=0){
-    try_res = quiet_gnm_mod1(t,t_G,y.sum,pf=pf,bpr=bpr,disp=disp,delta,vol,props = c(1/3,2/3), calibration = calibration)
+  
+  # if default (c(1/6,1/2)) not work, use cut c(1/60,1/10).
+  props_new =c(1/60,1/10)
+  while (length(try_res$messages)!=0 & props_new[1]<0.1){
+    props_new[1] = props_new[1] + 0.02
+    try_res = quiet_gnm_mod(t,y.sum,delta,vol,props = props_new)
   }
   
   if(length(try_res$messages)!=0){
     try_res = quiet_gnm_mod1(t,t_G,y.sum,pf=pf,bpr=bpr,disp=disp,delta,vol,props = c(1/90,6/90), calibration = calibration)
   }
   
-  props_new =c(1/60,1/10)
-  while (length(try_res$messages)!=0 & props_new[1]<0.1){
-    props_new[1] = props_new[1] + 0.02
-    try_res = quiet_gnm_mod(t,y.sum,delta,vol,props = props_new)
+  if(length(try_res$messages)!=0){
+    try_res = quiet_gnm_mod1(t,t_G,y.sum,pf=pf,bpr=bpr,disp=disp,delta,vol,props = c(1/3,2/3), calibration = calibration)
   }
+
   
   # If still not working, try (m,1/2) where 1/6<m<1/3
   props_new =c(1/6,1/2)

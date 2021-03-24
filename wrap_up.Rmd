@@ -19,7 +19,8 @@ source("rcode/pred_aif.R")
 source("rcode/readdata.R")
 source("rcode/slice_curve.R")
 source("rcode/rising_mod.R")
-source("./rcode/plotcode.R")
+source("rcode/plotcode.R")
+source("rcode/add_bpr.R")
 ```
 
 # Prepare data
@@ -31,8 +32,8 @@ data = readdata()
 data = data %>% 
   group_by(patient) %>% 
   mutate(count = map(count,~findtmax(.x)),
-         count_asc = map(count, ~slice_asc(.x)),
-         count_dsc = map(count, ~slice_exp(.x)))
+         count_asc = map(count, ~slice_asc(.x)), # data before tmax
+         count_dsc = map(count, ~slice_exp(.x))) # data after tmax
 ```
 
 # Fit model
@@ -40,9 +41,9 @@ data = data %>%
 ```{r}
 data = data %>% 
   group_by(patient) %>% 
-  mutate(asc_res = map(count_asc, ~acs_inter(.x)),
+  mutate(asc_res = map(count_asc, ~acs_inter(.x)), # detect t0 and interpolate aif between t0 and tmax
          count_asc = map(asc_res, ~.x$data), # add t0 to the data
-         asc_mod = map(asc_res, ~.x$segmod), # interpolate data for ascending part
+         asc_mod = map(asc_res, ~.x$segmod), # save model that detecting t0
          dsc_mod = map(count_dsc, # fit nonlinear poisson regression for descending part
                        ~kinfitr_gnm(t = .x$time, # time since tmax
                                     t_G = .x$t_G, # time point put in gamma count since injection time
@@ -54,11 +55,11 @@ data = data %>%
                                     disp = rep(1,nrow(.x))
                                     )
                        ),
-         dsc_mod = map(dsc_mod, ~.x$result),
-         asc_pred = map(asc_res, ~.x$pred),
-         dsc_pred = map2(dsc_mod,count_dsc,~pred_aif(.x,.y)),
-         pred = map2(asc_pred,dsc_pred,~rbind(.x,.y[-1,])),
-         rsd = map2(count, pred, ~add_residual(.x,.y))
+         dsc_mod = map(dsc_mod, ~.x$result), # save model fit data after tmax
+         asc_pred = map(asc_res, ~.x$pred), # get prediction before tmax
+         dsc_pred = map2(dsc_mod,count_dsc,~pred_aif(.x,.y)), # get prediction after tmax
+         pred = map2(asc_pred,dsc_pred,~rbind(.x,.y[-1,])), # combine predicted aif
+         rsd = map2(count, pred, ~add_residual(.x,.y)) # calculate residuals
          ) %>% 
   select(-asc_res)
 
@@ -66,12 +67,12 @@ data = data %>%
 
 # plot 
 
-
 ```{r}
 for (i in 1:nrow(data)){
   par(mfrow=c(1,1))
-  scope_whole(data[i,],0,5)
-  plot_rsd(data[i,],0,90) # with median
+  # change range of time by using 2nd and 3rd arguments
+  scope_whole(data[i,],0,5) # plot aif and predicted aif
+  plot_rsd(data[i,],0,90) # plot residuals and boxplot with median
 }
 
 ```
