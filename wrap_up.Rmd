@@ -1,8 +1,7 @@
 ---
 title: "Wrap up"
 author: "Mengyu Zhang"
-date: "3/22/2021"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -57,8 +56,9 @@ data = data %>%
                        ),
          dsc_mod = map(dsc_mod, ~.x$result), # save model fit data after tmax
          asc_pred = map(asc_res, ~.x$pred), # get prediction before tmax
-         dsc_pred = map2(dsc_mod,count_dsc,~pred_aif(.x,.y)), # get prediction after tmax
-         pred = map2(asc_pred,dsc_pred,~rbind(.x,.y[-1,])), # combine predicted aif
+         # get prediction after tmax, contain interpolated aif
+         dsc_pred = map2(dsc_mod,count_dsc,~pred_aif(.x,.y)), 
+         pred = map2(asc_pred,dsc_pred,~rbind(.x,.y$rsd[-1,])), # combine predicted aif
          rsd = map2(count, pred, ~add_residual(.x,.y)) # calculate residuals
          ) %>% 
   select(-asc_res)
@@ -71,8 +71,8 @@ data = data %>%
 for (i in 1:nrow(data)){
   par(mfrow=c(1,1))
   # change range of time by using 2nd and 3rd arguments
-  scope_whole(data[i,],0,5) # plot aif and predicted aif
-  plot_rsd(data[i,],0,90) # plot residuals and boxplot with median
+  scope_whole(data[i,],10,90) # plot aif and predicted aif
+  plot_rsd(data[i,],10,90) # plot residuals and boxplot with median
 }
 
 ```
